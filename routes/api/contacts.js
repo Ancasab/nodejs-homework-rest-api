@@ -1,18 +1,13 @@
 import express from "express";
 import contactsController from "../../controller/contactsController.js";
 import contactSchema from "../../validators/contactValidator.js";
+import { STATUS_CODES } from "../../utils/constants.js";
+import authController from "../../controller/authController.js";
 
 const router = express.Router()
-
-const STATUS_CODES = {
-  success: 200,
-  delete: 204,
-  error: 500,
-
-}
  
 /* GET localhost:3000/api/contacts */
-router.get('/', async (req, res, next) => {
+router.get('/', authController.validateAuth, async (req, res, next) => {
   try {
     const contacts = await contactsController.listContacts();
     console.dir(contacts);
@@ -28,7 +23,7 @@ router.get('/', async (req, res, next) => {
 });
 
 /* GET localhost:3000/api/contacts/:contactId  */
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', authController.validateAuth, async (req, res, next) => {
   try {
     const contact = await contactsController.getContactById(req.params.id);
     if (!contact) {
@@ -47,7 +42,7 @@ router.get('/:id', async (req, res, next) => {
 })
 
 /* POST localhost:3000/api/contacts/  */
-router.post("/", async (req, res, next) => {
+router.post("/", authController.validateAuth, async (req, res, next) => {
   try {
 
     const { error } = contactSchema.validate(req.body);
@@ -70,7 +65,7 @@ router.post("/", async (req, res, next) => {
 
 
 /* DELETE localhost:3000/api/contacts/:contactId  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authController.validateAuth, async (req, res, next) => {
   try {
     const removedContact = await contactsController.removeContact(req.params.id);
     if (!removedContact) {
@@ -90,7 +85,7 @@ router.delete('/:id', async (req, res, next) => {
 
 
 /* PUT localhost:3000/api/contacts/:contactId  */
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", authController.validateAuth, async (req, res, next) => {
   try {
   
     const { error } = contactSchema.validate(req.body);
@@ -119,7 +114,7 @@ router.put("/:id", async (req, res, next) => {
 });
 
 /* PATCH localhost:3000/api/contacts/:contactId/favorite */
-router.patch("/:id/favorite", async (req, res, next) => {
+router.patch("/:id/favorite", authController.validateAuth, async (req, res, next) => {
   try {
     const { favorite } = req.body;
     
