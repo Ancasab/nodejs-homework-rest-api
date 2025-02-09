@@ -6,21 +6,34 @@ import authController from "../../controller/authController.js";
 
 const router = express.Router()
  
-/* GET localhost:3000/api/contacts */
+/* GET localhost:3000/api/contacts - toate contactele */ 
+/* GET localhost:3000/api/contacts/?favorite=true - FILTRARE după favorite  */
+/* GET localhost:3000/api/contacts/?page=2&limit=5 - PAGINARE */
+/* GET localhost:3000/api/contacts/?favorite=true&page=1&limit=5 - COMBO (filtrare + paginare)  */
+      
 router.get('/', authController.validateAuth, async (req, res, next) => {
   try {
-    const contacts = await contactsController.listContacts();
-    console.dir(contacts);
+    const { page = 1, limit = 20, favorite } = req.query;
+    const result = await contactsController.listContacts(page, limit, favorite);
 
-    res
-      .status(STATUS_CODES.success)
-      .json({ message: 'Lista a fost returnata cu succes', data: contacts });
-    
+    if (!result.success) {
+      return res.status(500).json({ message: result.error });
+    }
+
+    res.status(STATUS_CODES.success).json({
+      message: 'Lista a fost returnată cu succes',
+      data: result.contacts,
+      totalPages: result.totalPages,
+      currentPage: result.currentPage,
+    });
+
   } catch (error) {
     respondWithError(res, error);
   }
-  
 });
+
+
+
 
 /* GET localhost:3000/api/contacts/:contactId  */
 router.get('/:id', authController.validateAuth, async (req, res, next) => {
