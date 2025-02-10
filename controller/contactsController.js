@@ -11,16 +11,37 @@ const contactsController = {
   updateStatusContact,
 }
 
-export async function listContacts() {
-    console.log('--- List Contacts ---');
-    try {
-        return Contact.find();
 
-    } catch (error) {
-        console.log("There is an error");
-        console.error(error);
+export async function listContacts(page = 1, limit = 20, favorite) {
+  console.log(`--- List Contacts --- Page: ${page}, Limit: ${limit}, Favorite: ${favorite}`);
+
+  try {
+    const skip = (page - 1) * limit;
+    const filter = {};
+
+    if (favorite !== undefined) {
+      filter.favorite = favorite === "true"; 
+    }
+    
+    console.log(filter);
+
+    const contacts = await Contact.find(filter)
+      .skip(Number(skip))
+      .limit(Number(limit));
+
+    const totalContacts = await Contact.countDocuments(filter);
+
+    return {
+      success: true,
+      contacts,
+      totalPages: Math.ceil(totalContacts / limit),
+      currentPage: Number(page),
+    };
+  } catch (error) {
+    console.error("Error fetching contacts:", error);
+    return { success: false, error: error.message };
   }
-};
+}
 
 
 
