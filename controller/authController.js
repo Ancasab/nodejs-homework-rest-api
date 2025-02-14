@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import User from '../models/users.js';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
+import gravatar from 'gravatar';
 
 dotenv.config();
 
@@ -54,12 +55,14 @@ export async function signup(data) {
 
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const userAvatar = gravatar.url(email);   
 
     const newUser = await User.create({
         email,
         password: hashedPassword,
         subscription: "starter",
-        token: null
+        token: null,
+        avatarURL: userAvatar,
     });
 
     return newUser;
