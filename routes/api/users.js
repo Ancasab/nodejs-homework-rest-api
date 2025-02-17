@@ -8,8 +8,6 @@ import userSchema from "../../validators/userValidator.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
-// import { processAvatar } from "../../controller/fileController.js";
-// import { STATUS_CODES } from "../../utils/constants.js";
 import fileController from "../../controller/fileController.js";
 
 
@@ -149,55 +147,9 @@ router.patch("/", authController.validateAuth, async (req, res) => {
   }
 });
 
-/* Actualizarea avatarului  
-PATCH localhost:3000/api/users/avatars */
-// router.patch(
-//   "/avatar",
-//   fileController.uploadFile,
-//   async function (req, res, next) {
-//   try {
-//     res.status(STATUS_CODES.success).json({
-//       avatarURL: req.file,
-//     });
-//   } catch (error) {
-//     // console.error("Current user error:", error.message);
-//     return res.status(401).json({ message: "Not authorized" });
-//   }
-  
-// });
-
-
-// router.patch("/avatars", authController.validateAuth, upload.single("avatar"), async (req, res, next) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ message: "No file uploaded" });
-//     }
-
-//     const { path: tempPath, filename } = req.file;
-//     const newFilename = `${req.user._id}-${Date.now()}.jpg`;
-//     const newPath = path.join(avatarsDir, newFilename);
-
-//     // Resize image using Jimp
-//     const image = await Jimp.read(tempPath);
-//     await image.resize(250, 250).writeAsync(newPath);
-
-//     // Remove temporary file
-//     await fs.unlink(tempPath);
-
-//     // Update user's avatar URL
-//     const avatarURL = `/avatars/${newFilename}`;
-//     await User.findByIdAndUpdate(req.user._id, { avatarURL }, { new: true });
-
-//     res.json({ avatarURL });
-//   } catch (error) {
-//     next(error);
-//   }
-// });
-
 /* ACTUALIZARE AVATAR  
 PATCH localhost:3000/api/users/avatars */
 
-// Set up Multer storage
 const uploadDir = path.join("tmp");
 
 const storage = multer.diskStorage({
