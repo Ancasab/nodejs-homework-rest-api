@@ -11,14 +11,11 @@ const avatarsDir = path.join("public/avatars");
 
 export async function processAvatar(userId, tempPath) {
   try {
-    console.log("Start processing avatar");
-
-    
+   
     await fs.mkdir(avatarsDir, { recursive: true });
 
     const newFilename = `${userId}-${Date.now()}.jpg`;
     const newPath = path.join(avatarsDir, newFilename);
-    console.log("New path for avatar:", newPath);
 
     
     await sharp(tempPath)
@@ -27,18 +24,14 @@ export async function processAvatar(userId, tempPath) {
       .jpeg({ quality: 90 }) 
       .toFile(newPath);
 
-    console.log("Image processed and saved to public/avatars");
 
     
     await fs.unlink(tempPath);
-    console.log("Temporary file deleted");
 
    
     const avatarURL = `/avatars/${newFilename}`;
-    console.log("Avatar URL:", avatarURL);
 
     await User.findByIdAndUpdate(userId, { avatarURL }, { new: true });
-    console.log("User avatar updated");
 
     return avatarURL;
   } catch (error) {
