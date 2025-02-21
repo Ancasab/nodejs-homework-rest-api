@@ -4,6 +4,8 @@ import User from '../models/users.js';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import gravatar from 'gravatar';
+import { v4 as uuidv4 } from 'uuid';
+import { sendWithSendGrid } from '../utils/sendEmail.js';
 
 dotenv.config();
 
@@ -15,15 +17,17 @@ const authController = {
     signup,
     validateAuth,
     getPayloadFromJWT,
+    getUserByValidationToken,
+    updateToken,
 };
 
-// Funcție de LOGIN
+// LOGIN function
 export async function login(data) {
     const { email, password } = data;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email, verify: true });
 
     if (!user) {
-        throw new Error("Email or password is incorrect");
+        throw new Error("Email incorrect / not validated or password is incorrect");
     }
 
     const isMatching = await bcrypt.compare(password, user.password);
@@ -44,7 +48,7 @@ export async function login(data) {
     return token;
 }
 
-// Funcție de SIGNUP
+// SIGNUP function
 export async function signup(data) {
     const { email, password } = data;
 
@@ -55,7 +59,8 @@ export async function signup(data) {
 
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const userAvatar = gravatar.url(email);   
+    const userAvatar = gravatar.url(email);  
+    const token = uuidv4();
 
     const newUser = await User.create({
         email,
@@ -63,12 +68,32 @@ export async function signup(data) {
         subscription: "starter",
         token: null,
         avatarURL: userAvatar,
+        verificationToken: token,
+        verify: false,
     });
+    
+    sendWithSendGrid(email, token);
+
 
     return newUser;
 }
 
-// Funcție pentru VALIDARE JWT
+// UPDATE TOKEN FOR VALIDATION function
+export async function updateToken(email, token) {
+    token = token || uuidv4();
+    const updatedUser = await User.findOneAndUpdate(
+        { email },
+        { verificationToken: token },
+        { new: true } 
+    );
+
+    if (updatedUser) {
+        sendWithSendGrid(email, token);
+    }
+}
+
+
+// VALIDATION JWT  function
 export function validateJWT(token) {
     try {
         const decoded = jwt.verify(token, secretForToken);
@@ -79,7 +104,7 @@ export function validateJWT(token) {
     }
 }
 
-// Funcție pentru OBTINEREA PAYLOAD-ULUI din JWT
+// OBTAIN PAYLOAD-ULUI FROM JWT function
 export async function getPayloadFromJWT(token) {
     try {
         return jwt.verify(token, secretForToken);
@@ -89,7 +114,7 @@ export async function getPayloadFromJWT(token) {
     }
 }
 
-// Middleware pentru VALIDAREA AUTENTIFICĂRII
+// Middleware for AUTHENTICATION VALIDATION function
 export function validateAuth(req, res, next) {
     passport.authenticate("jwt", { session: false }, (err, user) => {
         if (err || !user) {
@@ -104,6 +129,15 @@ export function validateAuth(req, res, next) {
         next();
     })(req, res, next);
 }
+
+// USER TOKEN VALIDATION function
+export async function getUserByValidationToken(token) {
+    return await User.findOne({ verificationToken: token, verify: false });
+}
+
+
+
+
 
 export default authController;
 

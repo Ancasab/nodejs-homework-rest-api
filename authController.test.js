@@ -27,7 +27,7 @@ describe('Auth Controller - Login', () => {
     const result = await login(data);
 
     expect(result).toBe('mocked_token');
-    expect(User.findOne).toHaveBeenCalledWith({ email: data.email });
+    expect(User.findOne).toHaveBeenCalledWith({ email: data.email, verify: true });
     expect(bcrypt.compare).toHaveBeenCalledWith(data.password, mockUser.password);
     expect(jwt.sign).toHaveBeenCalledWith(
       { id: mockUser._id, email: mockUser.email },
@@ -40,7 +40,7 @@ describe('Auth Controller - Login', () => {
     vi.spyOn(User, 'findOne').mockResolvedValue(null);
 
     const data = { email: 'wrong@example.com', password: 'password123' };
-    await expect(login(data)).rejects.toThrow("Email or password is incorrect");
+    await expect(login(data)).rejects.toThrow("Email incorrect / not validated or password is incorrect");
   });
 
   it('should throw an error if password is incorrect', async () => {
