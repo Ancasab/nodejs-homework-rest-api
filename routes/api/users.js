@@ -8,7 +8,10 @@ import userSchema from "../../validators/userValidator.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from 'uuid';
 import fileController from "../../controller/fileController.js";
+import emailSchema from "../../validators/emailValidator.js";
+
 
 
 dotenv.config();
@@ -74,7 +77,7 @@ router.post("/login", async (req, res) => {
       user: {
         email: user.email,
         subscription: user.subscription,
-        // avatarURL: req.user.avatarURL,
+        
       },
     });
 
@@ -85,7 +88,6 @@ router.post("/login", async (req, res) => {
 });
 
 /* LOGOUT - GET localhost:3000/api/users/logout */
-
 router.get("/logout", authController.validateAuth, async (req, res) => {
   try {
     const user = await User.findOneAndUpdate(
@@ -121,7 +123,65 @@ router.get("/current", authController.validateAuth, async (req, res) => {
   }
 });
 
-/* Reînnoirea/ actualizarea abonamentului  
+/* GET localhost:3000/api/users/verify/:verificationToken */
+router.get("/verify/:verificationToken", async (req, res) => {
+  const token = req.params.verificationToken;
+
+  try {
+    const user = await authController.getUserByValidationToken(token);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await User.findOneAndUpdate(
+      { verificationToken: token },
+      { verify: true, verificationToken: null },
+      { new: true }
+    );
+
+    return res.status(200).json({ message: "Verification successful" });
+
+  } catch (error) {
+    console.error("Verification error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+/* POST localhost:3000/api/users/verify */
+router.post("/verify", async (req, res) => {
+  const { error } = emailSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: "Missing required field email" });
+  }
+
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verify) {
+      return res.status(400).json({ message: "Verification has already been passed" });
+    }
+
+    const newToken = user.verificationToken || uuidv4();
+    await authController.updateToken(email, newToken);
+
+    return res.status(200).json({ message: "Verification email sent" });
+
+  } catch (error) {
+    console.error("Error resending verification email:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
+/* Renew/ update subscription 
 PATCH localhost:3000/api/users */
 router.patch("/", authController.validateAuth, async (req, res) => {
   try {
@@ -147,9 +207,8 @@ router.patch("/", authController.validateAuth, async (req, res) => {
   }
 });
 
-/* ACTUALIZARE AVATAR  
+/* AVATAR UPDATE 
 PATCH localhost:3000/api/users/avatars */
-
 const uploadDir = path.join("tmp");
 
 const storage = multer.diskStorage({
