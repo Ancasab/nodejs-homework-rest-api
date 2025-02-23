@@ -1,0 +1,23 @@
+# Node.js
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Git.git.gitignore
+
+# Docker
+Dockerfile.dockerignore
+
+# System files.DS_Store
+Thumbs.db
+
+# Environment variables.env
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp
+temp
